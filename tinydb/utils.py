@@ -78,9 +78,10 @@ class LRUCache(abc.MutableMapping, Generic[K, V]):
         del self.cache[key]
 
     def __getitem__(self, key) -> V:
-        value = self.get(key)
-        if value is None:
+        if key not in self.cache:
             raise KeyError(key)
+        value = self.cache[key]
+        self.cache.move_to_end(key, last=True)
 
         return value
 
@@ -88,14 +89,12 @@ class LRUCache(abc.MutableMapping, Generic[K, V]):
         return iter(self.cache)
 
     def get(self, key: K, default: Optional[D] = None) -> Optional[Union[V, D]]:
-        value = self.cache.get(key)
+        if key not in self.cache:
+            return default
+        value = self.cache[key]
+        self.cache.move_to_end(key, last=True)
 
-        if value is not None:
-            self.cache.move_to_end(key, last=True)
-
-            return value
-
-        return default
+        return value
 
     def set(self, key: K, value: V):
         if key in self.cache:
